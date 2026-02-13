@@ -81,11 +81,12 @@ class TicketPanelSelect(ui.Select):
         self.user = user
 
     async def callback(self, interaction: Interaction):
+        await interaction.response.defer(ephemeral=True)
         category = interaction.guild.get_channel(TICKET_CATEGORY_ID)
         if not category or len(category.channels) >= 50:
             embed = discord.Embed(title="Error", description="カテゴリーが見つからないか、満杯で作成できません。", color=discord.Color.red())
             embed.set_author(name="System", icon_url="https://i.postimg.cc/CxyfBNQ1/35112-error11.png")
-            return await interaction.response.send_message(embed=embed, ephemeral=True)
+            return await interaction.followup.send(embed=embed, ephemeral=True)
             
         overwrites = {
             interaction.guild.default_role: discord.PermissionOverwrite(view_channel=False),
@@ -114,7 +115,7 @@ class TicketPanelSelect(ui.Select):
             content += f" {notify_role.mention}"
             
         await ch.send(content, embed=embed, view=TicketView())
-        await interaction.response.send_message(f"{ch.mention} を作成しました", ephemeral=True)
+        await interaction.followup.send(f"{ch.mention} を作成しました", ephemeral=True)
 
 class TicketPanelButton(ui.Button):
     def __init__(self):
