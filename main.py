@@ -27,6 +27,7 @@ class MyBot(commands.Bot):
         self.add_view(TicketPanel())
         self.add_view(TicketView())
         await self.load_extension("cog.ticket")
+        await self.load_extension("cog.idou")
         await self.tree.sync()
 
 bot = MyBot()
