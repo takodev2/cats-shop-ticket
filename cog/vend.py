@@ -4,13 +4,25 @@ from discord import app_commands
 import datetime
 from config import LOG_CH_ID
 
+def load_items():
+    items = {}
+    try:
+        with open("lol.txt", "r", encoding="utf-8") as f:
+            for line in f:
+                if "=" in line:
+                    name, content = line.strip().split("=", 1)
+                    items[name] = content
+    except FileNotFoundError:
+        pass
+    return items
+
 class ConfirmView(discord.ui.View):
     def __init__(self, item_name, content):
         super().__init__(timeout=None)
         self.item_name = item_name
         self.content = content
 
-    @discord.ui.button(label="購入確定", style=discord.ButtonStyle.green)
+    @discord.ui.button(label="購入確定", style=discord.ButtonStyle.green, custom_id="confirm_purchase")
     async def confirm(self, interaction: discord.Interaction, button: discord.ui.Button):
         now = datetime.datetime.now().strftime("%y/%m/%d %H:%M:%S")
         
@@ -41,12 +53,12 @@ class ItemSelect(discord.ui.Select):
             discord.SelectOption(label=name, description="価格: 0円｜在庫数: ∞個")
             for name in items.keys()
         ]
-        super().__init__(placeholder="商品を選択してください", options=options)
+        super().__init__(placeholder="商品を選択してください", options=options, custom_id="item_select_menu")
         self.items = items
 
     async def callback(self, interaction: discord.Interaction):
         item_name = self.values[0]
-        content = self.items[item_name]
+        content = self.items.get(item_name, "データなし")
         
         embed = discord.Embed(title="購入確認", color=discord.Color.yellow())
         embed.add_field(name="商品名", value=f"***{item_name}***", inline=False)
@@ -56,36 +68,24 @@ class ItemSelect(discord.ui.Select):
         await interaction.response.send_message(embed=embed, view=ConfirmView(item_name, content), ephemeral=True)
 
 class VendView(discord.ui.View):
-    def __init__(self, items):
+    def __init__(self):
         super().__init__(timeout=None)
-        self.items = items
 
-    @discord.ui.button(label="💫￤購入", style=discord.ButtonStyle.gray)
+    @discord.ui.button(label="💫￤購入", style=discord.ButtonStyle.gray, custom_id="vend_buy_button")
     async def buy(self, interaction: discord.Interaction, button: discord.ui.Button):
+        items = load_items()
         embed = discord.Embed(title="無料自販機", description="下記のメニューから選んで購入してください。", color=discord.Color.blue())
         view = discord.ui.View()
-        view.add_item(ItemSelect(self.items))
+        view.add_item(ItemSelect(items))
         await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
 
 class Vend(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    def load_items(self):
-        items = {}
-        try:
-            with open("lol.txt", "r", encoding="utf-8") as f:
-                for line in f:
-                    if "=" in line:
-                        name, content = line.strip().split("=", 1)
-                        items[name] = content
-        except FileNotFoundError:
-            pass
-        return items
-
     @app_commands.command(name="panel", description="自販機パネルを設置します")
     async def panel(self, interaction: discord.Interaction):
-        items = self.load_items()
+        items = load_items()
         if not items:
             return await interaction.response.send_message("商品データが見つかりません。", ephemeral=True)
 
@@ -94,7 +94,7 @@ class Vend(commands.Cog):
             desc += f"**{name}**\n----------------\n"
         
         embed = discord.Embed(title="__無料自販機__", description=desc.strip(), color=discord.Color.green())
-        await interaction.channel.send(embed=embed, view=VendView(items))
+        await interaction.channel.send(embed=embed, view=VendView())
         await interaction.response.send_message("[+] 設置完了", ephemeral=True)
 
 async def setup(bot):
