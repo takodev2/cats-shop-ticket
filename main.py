@@ -27,7 +27,7 @@ class MyBot(commands.Bot):
 
         self.add_view(VendView()
 
-        await self.load_extension("cog.vend")
+        await self.load_extension("cog.vend"))
         await self.tree.sync()
 
 bot = MyBot()
