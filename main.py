@@ -5,7 +5,7 @@ from threading import Thread
 from flask import Flask
 
 from config import TOKEN
-from cog.ticket import TicketView, TicketPanel
+from cog.vend import VendView
 
 app = Flask('')
 
@@ -24,10 +24,10 @@ class MyBot(commands.Bot):
         super().__init__(command_prefix="!", intents=intents)
 
     async def setup_hook(self):
-        self.add_view(TicketPanel())
-        self.add_view(TicketView())
-        await self.load_extension("cog.ticket")
-        await self.load_extension("cog.idou")
+
+        self.add_view(VendView()
+
+        await self.load_extension("cog.vend")
         await self.tree.sync()
 
 bot = MyBot()
